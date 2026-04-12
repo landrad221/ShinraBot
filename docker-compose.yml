@@ -1,0 +1,9 @@
+services:
+  bot:
+    build: .
+    container_name: leveling-bot
+    env_file:
+      - .env
+    volumes:
+      - ./db:/app/db
+    restart: always
