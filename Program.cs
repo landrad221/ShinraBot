@@ -49,9 +49,7 @@ namespace ShinraBot
             return Convert.ToInt32(result);
         }
 
-        public SqliteConnection GetConnection() {
-            return _connection;
-        }
+        public SqliteConnection Connection => _connection;
 
         // Call this when the bot shuts down
         public void Close() => _connection.Close();
@@ -92,7 +90,7 @@ namespace ShinraBot
                     // Inside your message handler, if someone types !rank
                 if (e.Message.Content.ToLower() == "!rank")
                 {
-                    var connection = db.GetConnection();
+                    var connection = db.Connection;
                     
                     var cmd = connection.CreateCommand();
                     cmd.CommandText = "SELECT XP FROM Users WHERE UserId = $id";
