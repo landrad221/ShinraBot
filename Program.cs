@@ -41,8 +41,8 @@ namespace ShinraBot
                 {
                     await e.Message.RespondAsync($"🌟 **LEVEL UP!** {e.Author.Mention} reached **Level {newLevel}**!");
                 }
-                    // Inside your message handler, if someone types !rank
-                if (e.Message.Content.ToLower() == "!rank")
+                    // Inside your message handler, if someone types /rank
+                if (e.Message.Content.ToLower() == "/rank")
                 {
                     var connection = db.Connection;
                     
