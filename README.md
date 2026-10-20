@@ -7,7 +7,7 @@
 
 **ShiraBot** is a multipurpose Discord bot written in **C#** using **DSharpPlus**. It includes a dynamic leveling system, server-configurable rewards, automatic moderation, and moderation tools, with support for Linux and containerized deployments.
 
-[Invite ShiraBot](https://discord.com/api/oauth2/authorize?client_id=YOUR_ID&permissions=8&scope=bot) • [Features](#-features) • [Deployment](#-deployment) • [Commands](#-commands) • [Contributing](#-contributing)
+[Invite ShiraBot](https://discord.com/api/oauth2/authorize?client_id=YOUR_ID&permissions=8&scope=bot) • [Features](#-features) • [Deployment](#-deployment) • [Commands](#-commands) • [Code Reference](CODE_REFERENCE.md) • [Contributing](#-contributing)
 
 ---
 
