@@ -1,66 +1,69 @@
-﻿// Load libraries
-using DSharpPlus;
-using DSharpPlus.EventArgs;
-using Microsoft.Data.Sqlite;
-using System;
+﻿using DSharpPlus;
+using DSharpPlus.SlashCommands;
 using DotNetEnv;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
-namespace ShinraBot 
+namespace ShinraBot
 {
+    class Program
+    {
+        static async Task Main()
+        {
+            if (File.Exists(".env"))
+                Env.Load();
 
-    class Program {
-        static async Task Main() {
+            var builder = Host.CreateApplicationBuilder();
+            var provider = Environment.GetEnvironmentVariable("DATABASE_PROVIDER") ?? "sqlite";
+            var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
+                ?? "Data Source=db/level.db";
+            var database = new DBHandler(provider, connectionString);
+            await database.InitializeAsync();
 
-            // Load the .env file
-            Env.Load(); 
+            var token = Environment.GetEnvironmentVariable("BOT_DISCORD_TOKEN");
+            if (string.IsNullOrWhiteSpace(token))
+                throw new InvalidOperationException("BOT_DISCORD_TOKEN must be configured.");
 
-            // Handler for Database
-            var db = new DBHandler("Data Source=db/level.db");
-
-            // --- BOT SETUP ---
             var discord = new DiscordClient(new DiscordConfiguration
             {
-                Token = Environment.GetEnvironmentVariable("BOT_DISCORD_TOKEN"),
+                Token = token,
                 TokenType = TokenType.Bot,
-                Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents
+                Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents | DiscordIntents.GuildMembers,
+                MessageCacheSize = 1000
             });
 
-            discord.MessageCreated += async (s, e) =>
+            builder.Services.AddSingleton(database);
+            builder.Services.AddSingleton(discord);
+            builder.Services.AddSingleton<BotServices>();
+            using var host = builder.Build();
+            var botServices = host.Services.GetRequiredService<BotServices>();
+
+            var slashCommands = discord.UseSlashCommands(new SlashCommandsConfiguration
             {
-                if (e.Author.IsBot) return;
+                Services = host.Services
+            });
+            slashCommands.RegisterCommands<UtilityCommands>();
+            slashCommands.RegisterCommands<ModerationCommands>();
 
-                ulong userId = e.Author.Id;
-                int currentXp = db.UpdateUserXP(userId, 15); // Give 15 XP
-
-                // Level calculation: Level = Square root of (XP / 100)
-                // Level 1 = 100xp, Level 2 = 400xp, Level 3 = 900xp
-                int oldLevel = (int)Math.Sqrt((currentXp - 15) / 100.0);
-                int newLevel = (int)Math.Sqrt(currentXp / 100.0);
-
-                if (newLevel > oldLevel)
-                {
-                    await e.Message.RespondAsync($"🌟 **LEVEL UP!** {e.Author.Mention} reached **Level {newLevel}**!");
-                }
-                    // Inside your message handler, if someone types /rank
-                if (e.Message.Content.ToLower() == "/rank")
-                {
-                    var connection = db.Connection;
-                    
-                    var cmd = connection.CreateCommand();
-                    cmd.CommandText = "SELECT XP FROM Users WHERE UserId = $id";
-                    cmd.Parameters.Add("$id", SqliteType.Text).Value = e.Author.Id.ToString();
-
-                    var result = cmd.ExecuteScalar();
-                    int xp = result != null ? Convert.ToInt32(result) : 0;
-                    int level = (int)Math.Sqrt(xp / 100.0);
-
-                    await e.Message.RespondAsync($"{e.Author.Username}, you are **Level {level}** with **{xp} XP**!");
-                }
-            };
+            discord.MessageCreated += async (_, e) => await RunEventAsync(() => botServices.HandleMessageAsync(e));
+            discord.MessageDeleted += async (_, e) => await RunEventAsync(() => botServices.LogDeletedMessageAsync(e));
+            discord.GuildMemberAdded += async (_, e) => await RunEventAsync(() => botServices.LogMemberJoinedAsync(e));
+            discord.GuildMemberRemoved += async (_, e) => await RunEventAsync(() => botServices.LogMemberLeftAsync(e));
 
             await discord.ConnectAsync();
-            await Task.Delay(-1);
+            await Task.Delay(Timeout.Infinite);
+        }
 
+        private static async Task RunEventAsync(Func<Task> handler)
+        {
+            try
+            {
+                await handler();
+            }
+            catch (Exception exception)
+            {
+                Console.Error.WriteLine(exception);
+            }
         }
     }
 }

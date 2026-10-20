@@ -2,8 +2,29 @@ services:
   bot:
     build: .
     container_name: leveling-bot
-    env_file:
-      - .env
-    volumes:
-      - ./db:/app/db
+    environment:
+      BOT_DISCORD_TOKEN: ${BOT_DISCORD_TOKEN:?Set BOT_DISCORD_TOKEN in .env}
+      DATABASE_PROVIDER: postgres
+      DATABASE_CONNECTION_STRING: Host=postgres;Port=5432;Database=${POSTGRES_DB:-shirabot};Username=${POSTGRES_USER:-shirabot};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      MOD_LOG_CHANNEL_ID: ${MOD_LOG_CHANNEL_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: always
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-shirabot}
+      POSTGRES_USER: ${POSTGRES_USER:-shirabot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+volumes:
+  postgres-data:

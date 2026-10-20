@@ -5,7 +5,7 @@
 [![Discord](https://img.shields.io/discord/1234567890?color=7289da&label=Support%20Server&logo=discord&style=for-the-badge)](https://discord.gg/shirabot)
 [![Framework](https://img.shields.io/badge/.NET-8.0-512bd4.svg?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com/)
 
-**ShiraBot** is a high-performance, multipurpose Discord bot written in **C#** using **Discord.Net**. Designed for modern communities, it features a dynamic leveling system and robust moderation tools, optimized for Linux environments and containerized deployments.
+**ShiraBot** is a multipurpose Discord bot written in **C#** using **DSharpPlus**. It includes a dynamic leveling system, server-configurable rewards, automatic moderation, and moderation tools, with support for Linux and containerized deployments.
 
 [Invite ShiraBot](https://discord.com/api/oauth2/authorize?client_id=YOUR_ID&permissions=8&scope=bot) • [Features](#-features) • [Deployment](#-deployment) • [Commands](#-commands) • [Contributing](#-contributing)
 
@@ -14,20 +14,20 @@
 ## ✨ Features
 
 ### 📈 Dynamic Leveling System
-* **XP Scaling:** Advanced algorithms for fair experience gain.
-* **Rank Cards:** Customizable image-based rank cards (rendered via SkiaSharp).
-* **Role Rewards:** Automatically assign roles when users reach specific levels.
-* **Database Support:** Native support for PostgreSQL and SQLite.
+* **XP Scaling:** Earn 15-25 XP from messages, with a 60-second per-user cooldown. Levels follow `floor(sqrt(XP / 100))`.
+* **Rank Cards:** `/rank` renders a PNG card with the member's current level, XP, and progress to the next level.
+* **Role Rewards:** Configure automatic level rewards with `/reward-role`.
+* **Database Support:** PostgreSQL and SQLite, configured through environment variables. SQLite is the default for local runs.
 
 ### 🛡️ Robust Moderation
-* **Auto-Mod:** Smart filters for spam, mass-mentions, and blacklisted words.
-* **Logging:** Detailed audit logs for deleted messages and member changes.
-* **Hard Moderation:** Commands for `kick`, `ban`, `mute`, and `timeout`.
+* **Auto-Mod:** Removes bursts of six messages in eight seconds, mass mentions, and server-configured blocked words.
+* **Logging:** Sends deleted-message and member-join/leave logs to the channel configured with `MOD_LOG_CHANNEL_ID`.
+* **Hard Moderation:** Slash commands `/kick`, `/ban`, `/mute`, and `/timeout`, guarded by Discord permissions.
 
 ### ⚙️ Core Essentials
-* **Slash Commands:** Fully utilizes Discord's Interaction framework.
-* **Dependency Injection:** Built on `Microsoft.Extensions.DependencyInjection` for modularity.
-* **Linux Optimized:** Designed specifically for high-uptime Linux performance.
+* **Slash Commands:** Uses Discord interactions for `/rank`, `/ping`, moderation, and server configuration.
+* **Dependency Injection:** Built on `Microsoft.Extensions.DependencyInjection`.
+* **Linux Optimized:** Includes Linux-native SkiaSharp assets for rank card rendering.
 
 ## 📦 Deployment
 
@@ -41,28 +41,35 @@ cd shirabot
 
 # Setup environment variables
 cp .env.example .env
+# Set BOT_DISCORD_TOKEN and replace the example PostgreSQL password.
+# Enable the Message Content and Server Members privileged intents in the Discord Developer Portal.
+# Grant the bot the permissions required by the commands and moderation filters.
 
-# Spin up the containers (includes PostgreSQL and the Bot)
+# Start PostgreSQL and the bot
 docker-compose up -d
 ```
 
 ### 🐧 Manual Linux Setup
-Requires **.NET 8.0 SDK** or Runtime.
+Requires the **.NET 9 SDK** or Runtime.
 
 1.  **Clone:** `git clone https://github.com/shirabot/shirabot.git`
 2.  **Publish:**
     ```bash
-    dotnet publish -c Release -r linux-x64 --self-contained
+    dotnet publish -c Release
     ```
-3.  **Configure:** Update `appsettings.json` with your bot token and connection string.
-4.  **Run:** `./bin/Release/net8.0/linux-x64/publish/ShiraBot`
+  3.  **Configure:** Set `BOT_DISCORD_TOKEN`. The bot defaults to SQLite at `db/level.db`; set `DATABASE_PROVIDER=postgres` and `DATABASE_CONNECTION_STRING` to use PostgreSQL instead. Set `MOD_LOG_CHANNEL_ID` to enable moderation logs.
+  4.  **Run:** `dotnet bin/Release/net9.0/ShinraBot.dll`
 
 ## 🛠️ Commands
 
 | Category | Command | Description |
 | :--- | :--- | :--- |
-| **Leveling** | `/rank` | Display your current level and XP. |
-| **Mod** | `/ban` | Ban a member from the server. |
+| **Leveling** | `/rank` | Display your current level, XP, and rank card. |
+| **Leveling** | `/reward-role` | Assign a role reward to a level (Manage Server). |
+| **Mod** | `/ban` | Ban a member from the server (Ban Members). |
+| **Mod** | `/kick` | Kick a member (Kick Members). |
+| **Mod** | `/mute`, `/timeout` | Apply a Discord timeout (Moderate Members). |
+| **Auto-Mod** | `/block-word`, `/unblock-word` | Manage blocked words (Manage Server). |
 | **Utility** | `/ping` | Check the bot's heartbeat latency. |
 
 ## 🤝 Contributing
