@@ -1,8 +1,5 @@
-# 🌸 ShiraBot
-
-[![Build Status](https://img.shields.io/github/actions/workflow/status/shirabot/shirabot/dotnet-ci.yml?branch=main&style=for-the-badge)](https://github.com/shirabot/shirabot/actions)
+# ShiraBot
 [![License](https://img.shields.io/badge/License-MIT-deeppink.svg?style=for-the-badge)](LICENSE)
-[![Discord](https://img.shields.io/discord/1234567890?color=7289da&label=Support%20Server&logo=discord&style=for-the-badge)](https://discord.gg/shirabot)
 [![Framework](https://img.shields.io/badge/.NET-8.0-512bd4.svg?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com/)
 
 **ShiraBot** is a multipurpose Discord bot written in **C#** using **DSharpPlus**. It includes a dynamic leveling system, server-configurable rewards, automatic moderation, and moderation tools, with support for Linux and containerized deployments.
